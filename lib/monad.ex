@@ -22,7 +22,11 @@ defmodule Monad do
       @mod unquote(mod)
 
       defmacro unquote(name)([do: {:__block__, _, exprs}]) do
-        Monad.transform(exprs, unquote(mod))
+        body = Monad.transform(exprs, unquote(mod))
+        quote do
+          import unquote(@mod), only: [pure: 1]
+          unquote(body)
+        end
       end
 
       def bind(x, as, rest) do

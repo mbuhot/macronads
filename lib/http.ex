@@ -1,22 +1,20 @@
 defmodule Http do
-  use Monad, :http
+  use FreeMonad, :m
 
-  # API functions
-  def get(url, query, headers), do: {:get, %{url: url, query: query, headers: headers}}
-  def post(url, query, headers, body), do: {:post, %{url: url, query: query, headers: headers, body: body}}
-  def pure(v), do: {:pure, %{val: v}}
-  def bind(x, f), do: {:bind, %{val: x, next: f}}
+  def get(url, query, headers),        do: {Http, :get, [url, query, headers]}
+  def post(url, query, headers, body), do: {Http, :post, [url, query, headers, body]}
+end
 
-  # Interpreter
-  def runhttp(request = {:get, _}) do IO.puts("Getting: #{inspect(request)}"); {:ok, "Hello"} end
-  def runhttp(request = {:post, _}) do IO.puts("Posting: #{inspect(request)}"); {:ok, "Thanks!"} end
-  def runhttp({:pure, %{val: v}}) do {:ok, v} end
-  def runhttp({:bind, %{val: x, next: f}}) do
-    case runhttp(x) do
+defmodule HttpSim do
+  def run({Http, :get, _}) do {:ok, "Hello"} end
+  def run({Http, :post, _}) do {:ok, "Thanks!"} end
+  def run({Http, :pure, [v]}) do {:ok, v} end
+  def run({Http, :bind, [x, f]}) do
+    case run(x) do
       {:error, reason} -> {:error, reason}
       {:ok, val} ->
         fval = f.(val)
-        runhttp(fval)
+        run(fval)
     end
   end
 end
